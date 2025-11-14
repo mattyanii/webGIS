@@ -160,12 +160,19 @@ map.on('load', () => {
     layout: { visibility: 'none' }
   });
 
+  // --- Perbaikan: fasum sebagai circle layer untuk dapat popup ---
   map.addSource('fasum', { type: 'geojson', data: sources.fasum });
   map.addLayer({
     id: 'fasum-layer',
-    type: 'fill',
+    type: 'circle',
     source: 'fasum',
-    paint: { 'fill-color': '#00BFFF', 'fill-opacity': 0.5, 'line-width': 1 },
+    paint: {
+      'circle-color': '#00BFFF',
+      'circle-radius': 10,
+      'circle-opacity': 0.8,
+      'circle-stroke-color': '#0077b6',
+      'circle-stroke-width': 2
+    },
     layout: { visibility: 'none' }
   });
 
@@ -218,7 +225,6 @@ map.on('load', () => {
   document.getElementById('fasum').onchange = e =>
     map.setLayoutProperty('fasum-layer', 'visibility', e.target.checked ? 'visible' : 'none');
 
-  // ✅ Tambahkan event untuk garis sesar
   document.getElementById('sesaropak').onchange = e =>
     map.setLayoutProperty('sesarOpak-layer', 'visibility', e.target.checked ? 'visible' : 'none');
   document.getElementById('sesarsermo').onchange = e =>
@@ -280,8 +286,38 @@ map.on('load', () => {
     'sesarOpak-layer',
     'sesarSermo-layer'
   ]);
-});
 
+  // --- POPUP GAMBAR UNTUK FASUM ---
+  const popup = new mapboxgl.Popup({
+    closeButton: true,
+    closeOnClick: true
+  });
+
+  map.on('click', 'fasum-layer', (e) => {
+    const features = map.queryRenderedFeatures(e.point, {
+      layers: ['fasum-layer']
+    });
+    if (!features.length) return;
+
+    const feature = features[0];
+    const name = feature.properties.name || 'Fasilitas Umum';
+    const imageURL = feature.properties.imageURL || '';
+    let popupContent = `<strong>${waduk_sermo.jpg}</strong>`;
+    if (imageURL !== '') {
+      popupContent += `<br><img src="${https://github.com/mattyanii/webGIS/blob/main/waduk_sermo.jpg}" alt="Gambar ${waduk_sermo.jpg}" style="width:200px;max-height:150px;object-fit:cover;" />`;
+    }
+    popup.setLngLat(e.lngLat)
+         .setHTML(popupContent)
+         .addTo(map);
+  });
+
+  map.on('mouseenter', 'fasum-layer', () => {
+    map.getCanvas().style.cursor = 'pointer';
+  });
+  map.on('mouseleave', 'fasum-layer', () => {
+    map.getCanvas().style.cursor = '';
+  });
+});
 </script>
 </body>
 </html>
